@@ -1,0 +1,97 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === Global theme === */
+:root { --radius: 16px; --bottom-bar-h: 84px; }
+* { -webkit-tap-highlight-color: transparent; }
+html, body, #root { height: 100%; }
+body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
+  background-color: #FAF9F7;
+}
+
+/* Subtle white-leather background */
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:-1;
+  background:
+    radial-gradient(1200px 600px at 50% -20%, rgba(0,0,0,.035), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(0,0,0,.03), transparent 55%),
+    radial-gradient(900px 500px at 110% 15%, rgba(0,0,0,.03), transparent 55%),
+    repeating-radial-gradient(circle at 22% 33%, rgba(0,0,0,.016) 0 1px, transparent 1px 3px),
+    repeating-radial-gradient(circle at 71% 64%, rgba(0,0,0,.013) 0 1px, transparent 1px 3px);
+}
+
+/* Safe areas (iOS notch) */
+.safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem); }
+.safe-top    { padding-top:    calc(env(safe-area-inset-top) + 0.5rem); }
+
+/* ---------- Tailwind component utilities ---------- */
+@layer components {
+  .card  { @apply rounded-2xl shadow-soft bg-white; }
+  .pill  { @apply px-4 py-2 rounded-full border border-black/10 hover:border-gold transition-colors; }
+  .btn   { @apply inline-flex items-center justify-center px-4 py-3 rounded-xl font-semibold transition-colors; }
+  .btn-primary { @apply bg-gold text-white hover:bg-gold-600; }
+  .btn-ghost   { @apply bg-black/5 hover:bg-black/10; }
+  .card-gold   { @apply rounded-2xl text-white shadow-soft; background:#C9A227; }
+  .badge-pill  { @apply px-2 py-0.5 rounded-full text-[10px] tracking-wide; }
+}
+
+/* Reusable “glass” utility (don’t @apply this elsewhere) */
+.glass { background: rgba(255,255,255,0.78); backdrop-filter: blur(10px); }
+
+/* Leather variant for header */
+.card-leather{
+  background-color:#F2F1EF;
+  background-image:
+    radial-gradient(circle at 25% 15%, rgba(255,255,255,.55), transparent 42%),
+    radial-gradient(circle at 85% 5%,  rgba(255,255,255,.45), transparent 44%),
+    repeating-radial-gradient(circle at 30% 70%, rgba(0,0,0,.022) 0 1px, transparent 1px 3px),
+    repeating-radial-gradient(circle at 70% 30%, rgba(0,0,0,.018) 0 1px, transparent 1px 3px);
+  border:1px solid rgba(0,0,0,.06);
+  box-shadow: inset 0 1px rgba(255,255,255,.85), 0 10px 30px rgba(0,0,0,.08);
+}
+.header-logo-card { padding-top: .6rem; padding-bottom: .6rem; }
+.logo-emboss{
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.7))
+          drop-shadow(0 8px 18px rgba(0,0,0,.06));
+}
+
+/* Floating bottom bar – inline the glass styles here to avoid @apply errors */
+.bottom-bar {
+  @apply rounded-2xl p-2 flex items-center justify-between;
+  height: var(--bottom-bar-h);
+  box-shadow: 0 22px 44px rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.78);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Prevent last card hiding under navbar */
+.page-with-bottombar { padding-bottom: calc(var(--bottom-bar-h) + 22px + env(safe-area-inset-bottom)); }
+
+/* Active glow for tab */
+.tab-active { position: relative; }
+.tab-active::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: 10px; height: 4px; border-radius: 9999px; background: #C9A227; opacity: .28; }
+
+/* Horizontal scroll masks for category dock */
+.hmask { position: relative; }
+.hmask::before, .hmask::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 32px; z-index: 1; pointer-events: none;
+}
+.hmask::before { left: 0;  background: linear-gradient(90deg, #fff, rgba(255,255,255,0)); }
+.hmask::after  { right: 0; background: linear-gradient(270deg, #fff, rgba(255,255,255,0)); }
+
+/* Card hover lift */
+.card-hover { transition: transform .18s ease, box-shadow .18s ease; }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 16px 30px rgba(0,0,0,0.10); }
+
+/* Gallery */
+@keyframes scrollx { 0% { transform: translateX(0);} 100% { transform: translateX(-50%);} }
+.gallery-mask{ overflow:hidden; }
+.gallery-track{ display:flex; gap:.75rem; width:max-content; animation: scrollx 22s linear infinite; }
+.gallery-img{
+  flex:0 0 auto; width: 14rem; height: 8rem; object-fit: cover;
+  border-radius: 1rem; border: 1px solid rgba(0,0,0,.06); box-shadow: 0 8px 18px rgba(0,0,0,.08);
+}
