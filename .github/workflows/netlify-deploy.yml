@@ -1,0 +1,69 @@
+name: Deploy (Customer/Admin/Kitchen) to Netlify
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: netlify-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
+  VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+jobs:
+  customer:
+    name: Customer
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID:    ${{ secrets.NETLIFY_SITE_ID_CUSTOMER }}
+      NODE_VERSION:       18
+    defaults:
+      run:
+        working-directory: Baraak.Customer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ env.NODE_VERSION }} }
+      - run: npm ci || npm i
+      - run: npm run build
+      - run: npx netlify-cli@latest deploy --dir=dist --prod --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
+
+  admin:
+    name: Admin
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID:    ${{ secrets.NETLIFY_SITE_ID_ADMIN }}
+      NODE_VERSION:       18
+    defaults:
+      run:
+        working-directory: Baraak.Admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ env.NODE_VERSION }} }
+      - run: npm ci || npm i
+      - run: npm run build
+      - run: npx netlify-cli@latest deploy --dir=dist --prod --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
+
+  kitchen:
+    name: Kitchen
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID:    ${{ secrets.NETLIFY_SITE_ID_KITCHEN }}
+      NODE_VERSION:       18
+    defaults:
+      run:
+        working-directory: Baraak.Kitchen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ env.NODE_VERSION }} }
+      - run: npm ci || npm i
+      - run: npm run build
+      - run: npx netlify-cli@latest deploy --dir=dist --prod --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
