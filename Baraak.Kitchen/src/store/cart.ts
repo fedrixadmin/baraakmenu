@@ -1,59 +1,74 @@
 ﻿// src/store/cart.ts
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 
 export type CartItem = {
-  product_id: string;
-  name: string;
-  price: number;
-  qty: number;
-  image_url?: string | null;
+  id: string;
+  name?: string;
+  price?: number;      // per unit
+  quantity?: number;   // default 1
+  [key: string]: any;
 };
 
 type CartState = {
   items: CartItem[];
-  add: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  remove: (product_id: string) => void;
-  setQty: (product_id: string, qty: number) => void;
+
+  // actions
+  addItem: (item: CartItem) => void;
+  removeItem: (id: string) => void;
+  updateQty: (id: string, quantity: number) => void;
   clear: () => void;
+
+  // selectors (both names kept for compatibility)
+  itemsCount: () => number;
+  count: () => number;           // alias of itemsCount
+  total: () => number;           // total price
 };
 
-export const useCart = create<CartState>()(
-  persist(
-    (set, get) => ({
-      items: [],
-      add: (item, qty = 1) =>
-        set((state) => {
-          const found = state.items.find((x) => x.product_id === item.product_id);
-          if (found) {
-            return {
-              items: state.items.map((x) =>
-                x.product_id === item.product_id ? { ...x, qty: x.qty + qty } : x
-              ),
-            };
-          }
-          return { items: [...state.items, { ...item, qty }] };
-        }),
-      remove: (product_id) =>
-        set((state) => ({ items: state.items.filter((x) => x.product_id !== product_id) })),
-      setQty: (product_id, qty) =>
-        set((state) => ({
-          items: state.items.map((x) => (x.product_id === product_id ? { ...x, qty } : x)),
-        })),
-      clear: () => set({ items: [] }),
+export const useCartStore = create<CartState>()((set, get) => ({
+  items: [],
+
+  addItem: (item) =>
+    set((state) => {
+      const idx = state.items.findIndex((i) => i.id === item.id);
+      if (idx >= 0) {
+        const next = [...state.items];
+        const currentQty = typeof next[idx].quantity === "number" ? next[idx].quantity! : 1;
+        const addQty = typeof item.quantity === "number" ? item.quantity! : 1;
+        next[idx] = { ...next[idx], ...item, quantity: currentQty + addQty };
+        return { items: next };
+      }
+      return { items: [...state.items, { quantity: 1, ...item }] };
     }),
-    {
-      name: "cart",
-      storage: createJSONStorage(() => localStorage),
-      version: 1,
-      partialize: (state) => ({ items: state.items }),
-    }
-  )
-);
 
-// --- Legacy alias so existing imports keep working ---
-export const useCartStore = useCart;
+  removeItem: (id) =>
+    set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
 
-// --- Convenient selectors (optional but useful) ---
-export const useCartCount = () => useCart((s) => s.items.reduce((n, i) => n + i.qty, 0));
-export const useCartSubtotal = () => useCart((s) => s.items.reduce((sum, i) => sum + i.qty * i.price, 0));
+  updateQty: (id, quantity) =>
+    set((state) => ({
+      items: state.items
+        .map((i) => (i.id === id ? { ...i, quantity } : i))
+        .filter((i) => (i.quantity ?? 0) > 0),
+    })),
+
+  clear: () => set({ items: [] }),
+
+  itemsCount: () => {
+    const items = get().items;
+    return items.reduce((sum, i) => sum + (typeof i.quantity === "number" ? i.quantity : 1), 0);
+  },
+
+  // alias for components that call count()
+  count: () => {
+    const items = get().items;
+    return items.reduce((sum, i) => sum + (typeof i.quantity === "number" ? i.quantity : 1), 0);
+  },
+
+  total: () => {
+    const items = get().items;
+    return items.reduce((sum, i) => {
+      const qty = typeof i.quantity === "number" ? i.quantity : 1;
+      const price = typeof i.price === "number" ? i.price : 0;
+      return sum + qty * price;
+    }, 0);
+  },
+}));
